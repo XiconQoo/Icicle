@@ -9,6 +9,12 @@ Icicle_Font = {
     ["Interface\\AddOns\\Icicle\\Hooge0655.ttf"] = "Hooge0655",
 }
 
+Icicle_Order = {
+    ["none"] = "None",
+    ["ascending"] = "Ascending",
+    ["descending"] = "Descending",
+}
+
 ---------------------------------------------------------------------------------------------
 
 -- SLASH COMMAND
@@ -19,16 +25,16 @@ SLASH_ICICLE1 = "/icicletest"
 
 local testMode
 local function ICICLEfunc(msg)
-    if msg~= nil and msg ~= "" then
+    if msg ~= nil and msg ~= "" then
         if testMode then
             testMode = nil
         else
             testMode = true
             Icicle:Test(msg)
-            print("testmode activated")
+            print("Icicle testmode activated on unit " .. msg)
         end
     else
-        print("type \"/icicletest UnitName\" for test mode")
+        print("Icicle type \"/icicletest UnitName\" for test mode")
     end
 end
 
@@ -193,6 +199,13 @@ function Icicle:OnOptionsCreate()
                         desc = "Horizontal Range from the Namplate and Icon",
                         order = 7,
                     },
+                    order = {
+                        type = 'select',
+                        name = 'Icon sort order',
+                        desc = 'None(who comes first), Ascending or Descending by time left',
+                        values = Icicle_Order,
+                        order = 8,
+                    },
                     fontSize = {
                         type = 'range',
                         name = "font size",
@@ -263,7 +276,12 @@ local addicons = function(name, f, spellID)
     else
         size = Icicledb.iconsizer
     end
-    table.sort(db[name], function(a,b) return a.endtime < b.endtime end)
+    if Icicledb.order == "ascending" then
+        table.sort(db[name], function(a,b) return a.endtime < b.endtime end)
+    elseif Icicledb.order == "descending" then
+        table.sort(db[name], function(a,b) return a.endtime > b.endtime end)
+    end
+
     for i = 1, #db[name] do
         db[name][i]:ClearAllPoints()
         db[name][i]:SetWidth(size)
@@ -286,10 +304,8 @@ local hideicons = function(f)
                 db[name][i]:Hide()
                 db[name][i]:SetParent(nil)
             end
-            --print("Icicle HideIcons")
         end
     end
-    --f:SetScript("OnHide", nil)
 end
 
 local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
@@ -344,9 +360,9 @@ local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
             icon:SetScript("OnUpdate", nil)
             icon:Hide()
             if db[icon.unitName] then
-                for i = 1, #db[icon.unitName] do -- safe delete from db when timer runs out!
+                for i = 1, #db[icon.unitName] do
+                    -- safe delete from db when timer runs out!
                     if db[icon.unitName][i] and icon and db[icon.unitName][i].name == icon.name then
-                        --print("Icicle remove icon " .. icon.name .. " for unit " .. icon.unitName)
                         tremove(db[icon.unitName], i)
                         count = count - 1
                     end
@@ -406,11 +422,9 @@ local uppurge = function(self, elapsed)
     if onpurge >= 1 then
         onpurge = 0
         if count == 0 then
-            --print("plateframe:SetScript(\"OnUpdate\", nil)")
             plateframe:SetScript("OnUpdate", nil)
             purgeframe:SetScript("OnUpdate", nil)
         end
-        local naMe
         for k, v in pairs(db) do
             for i, c in ipairs(v) do
                 if c.endtime < GetTime() then
@@ -448,25 +462,19 @@ local getplate = function(frame, elapsed, spellID)
                     f.nameStr = name
                     Icicle:Test(name)
                     if db[name] ~= nil then
-                        --if f.icicle ~= #db[name] then
-                            --print("Icicle getplate: f.icicle ~= #db[name]")
-                            --print(name)
-                            f.icicle = #db[name]
-                            for j = 1, #db[name] do
-                                db[name][j]:SetParent(f)
-                                db[name][j]:Show()
-                            end
-                            addicons(name, f, spellID)
-                            if not f:GetScript("OnHide") then
-                                --("Icicle: f:SetScript(\"OnHide\")")
-                                f:SetScript("OnHide", hideicons)
-                                f.icicleHooked = true
-                            elseif not f.icicleHooked then
-                                --print("Icicle: f:HookScript(\"OnHide\")")
-                                f:HookScript("OnHide", hideicons)
-                                f.icicleHooked = true
-                            end
-                        --end
+                        f.icicle = #db[name]
+                        for j = 1, #db[name] do
+                            db[name][j]:SetParent(f)
+                            db[name][j]:Show()
+                        end
+                        addicons(name, f, spellID)
+                        if not f:GetScript("OnHide") then
+                            f:SetScript("OnHide", hideicons)
+                            f.icicleHooked = true
+                        elseif not f.icicleHooked then
+                            f:HookScript("OnHide", hideicons)
+                            f.icicleHooked = true
+                        end
                     end
                 end
             end
@@ -476,7 +484,6 @@ end
 
 function Icicle:Test(name)
     if testMode then
-        print("testmode executed")
         local function testCD(unitName, spell, id)
             if not eventcheck[unitName] then
                 eventcheck[unitName] = {}
@@ -508,13 +515,10 @@ function IcicleEvent.COMBAT_LOG_EVENT_UNFILTERED(event, ...)
     if (not ((pvpType == "contested" and Icicledb.field) or (pvpType == "hostile" and Icicledb.field) or (pvpType == "friendly" and Icicledb.field) or (currentZoneType == "pvp" and Icicledb.battleground) or (currentZoneType == "arena" and Icicledb.arena) or Icicledb.all)) then
         return
     end
-    local toSelf, toEnemy, fromEnemy, toTarget, fromFocus = false, false, false, false, false
 
-    if (destName and not CombatLog_Object_IsA(destFlags, COMBATLOG_OBJECT_NONE)) then
-        toEnemy = CombatLog_Object_IsA(destFlags, COMBATLOG_FILTER_HOSTILE_PLAYERS)
-    end
+    local isHostilePlayer = bit.band(srcFlags, COMBATLOG_OBJECT_TYPE_PLAYER) == COMBATLOG_OBJECT_TYPE_PLAYER and bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE
 
-    if IcicleCds[spellID] and bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) ~= 0 then
+    if IcicleCds[spellID] and isHostilePlayer then
         local Name = strmatch(srcName, "[%P]+")
         if eventType == "SPELL_CAST_SUCCESS" or eventType == "SPELL_AURA_APPLIED" or eventType == "SPELL_MISSED" or eventType == "SPELL_SUMMON" or eventType == "SPELL_AURA_REMOVED" then
             if not eventcheck[Name] then
@@ -526,7 +530,6 @@ function IcicleEvent.COMBAT_LOG_EVENT_UNFILTERED(event, ...)
                 eventcheck[Name][spellName] = GetTime()
             end
             if not plateframe:GetScript("OnUpdate") then
-                --print("plateframe:SetScript(\"OnUpdate\", getplate)")
                 plateframe:SetScript("OnUpdate", getplate)
                 purgeframe:SetScript("OnUpdate", uppurge)
             end

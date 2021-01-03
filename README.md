@@ -4,7 +4,6 @@ This addon shows enemy CDs on their nameplates.
 
 This is a slightly improved version of (https://github.com/Schaka/Icicle).
 The goal is to make it more reliant on clearing it's own icons.
-Later the iconcreation module will be rewritten, to reuse iconframes instead of creating more and more.
 
 You can create testicons with `/icicletest unitname` where `unitname` is the name of an hostile nameplate.
 
@@ -24,3 +23,11 @@ v1.1-Beta
 - add XiconPlateBuffs and SoHighPlates support
 - fixes icons suddenly appearing
 - add testmode
+- add icon sort option by time (none, ascending, descending)
+- code formatting fixed
+
+###TODO
+
+- icon creation module rwrite, to reuse iconframes instead of creating more and more (less memory usage)
+- filter cooldowns
+- add cooldowns
