@@ -342,11 +342,11 @@ local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
         else
             icon.cooldown:SetText(" ")
             icon:SetScript("OnUpdate", nil)
+            icon:Hide()
             if db[icon.unitName] then
                 for i = 1, #db[icon.unitName] do -- safe delete from db when timer runs out!
                     if db[icon.unitName][i] and icon and db[icon.unitName][i].name == icon.name then
                         --print("Icicle remove icon " .. icon.name .. " for unit " .. icon.unitName)
-                        icon:Hide()
                         tremove(db[icon.unitName], i)
                         count = count - 1
                     end
