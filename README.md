@@ -13,7 +13,7 @@ This is compatible with
 - https://github.com/shagu/ShaguPlates/
 - Aloft
 
-##Screenshot
+## Screenshot
 
 ![Screenshot](../readme-media/sample.png)
 
@@ -26,7 +26,7 @@ v1.1-Beta
 - add icon sort option by time (none, ascending, descending)
 - code formatting fixed
 
-###TODO
+### TODO
 
 - icon creation module rwrite, to reuse iconframes instead of creating more and more (less memory usage)
 - filter cooldowns
