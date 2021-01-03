@@ -1,6 +1,6 @@
 IcicleCds = {
 	--Test
-	[25368] = 18,				--"Shadow WOrd Pain"
+	--[25368] = 18,				--"Shadow WOrd Pain"
 	--Misc
 	[26297] = 180,				--"Berserking",
 	[20594] = 180,				--"Stoneform",

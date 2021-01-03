@@ -9,6 +9,37 @@ Icicle_Font = {
     ["Interface\\AddOns\\Icicle\\Hooge0655.ttf"] = "Hooge0655",
 }
 
+---------------------------------------------------------------------------------------------
+
+-- SLASH COMMAND
+
+---------------------------------------------------------------------------------------------
+
+SLASH_ICICLE1 = "/icicletest"
+
+local testMode
+local function ICICLEfunc(msg)
+    if msg~= nil and msg ~= "" then
+        if testMode then
+            testMode = nil
+        else
+            testMode = true
+            Icicle:Test(msg)
+            print("testmode activated")
+        end
+    else
+        print("type \"/icicletest UnitName\" for test mode")
+    end
+end
+
+SlashCmdList["ICICLE"] = ICICLEfunc;
+
+---------------------------------------------------------------------------------------------
+
+-- ICICLE
+
+---------------------------------------------------------------------------------------------
+
 function Icicle:OnInitialize()
     self.db2 = LibStub("AceDB-3.0"):New("Icicledb", dbDefaults, "Default");
     DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0AIcicle|r for WoW 2.4.3 updated by |cff0070DETrucidare|r - World of Corecraft  - /Icicle ");
@@ -204,6 +235,24 @@ local width
 
 local IcicleInterrupts = { 47528, 34490, 2139, 15487--[[Silence]], 1766, 5799--[[Wind Shear]], 72, 19647, 47476 } --pummel
 
+local getname = function(namePlate)
+    local name
+    local _, _, _, _, eman, _, _ = namePlate:GetRegions()
+    if namePlate.aloftData then
+        name = namePlate.aloftData.name
+    elseif sohighPlates then
+        name = namePlate.name:GetText()
+        --print(name)
+        --name = namePlate.oldname:GetText()
+    elseif strmatch(eman:GetText(), "%d") then
+        local _, _, _, _, _, nameRegion = namePlate:GetRegions()
+        name = nameRegion:GetText()
+    else
+        name = eman:GetText()
+    end
+    return name
+end
+
 local addicons = function(name, f, spellID)
     --name returns ___, f returns table value
     local num = #db[name] --number = db number
@@ -216,6 +265,7 @@ local addicons = function(name, f, spellID)
     else
         size = Icicledb.iconsizer
     end
+    table.sort(db[name], function(a,b) return a.endtime < b.endtime end)
     for i = 1, #db[name] do
         db[name][i]:ClearAllPoints()
         db[name][i]:SetWidth(size)
@@ -229,13 +279,19 @@ local addicons = function(name, f, spellID)
     end
 end
 
-local hideicons = function(name, f)
+local hideicons = function(f)
     f.icicle = 0
-    for i = 1, #db[name] do
-        db[name][i]:Hide()
-        db[name][i]:SetParent(nil)
+    local name = getname(f)
+    if name == f.nameStr then
+        if db[name] then
+            for i = 1, #db[name] do
+                db[name][i]:Hide()
+                db[name][i]:SetParent(nil)
+            end
+            --print("Icicle HideIcons")
+        end
     end
-    f:SetScript("OnHide", nil)
+    --f:SetScript("OnHide", nil)
 end
 
 local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
@@ -256,6 +312,7 @@ local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
     icon.cooldown:SetAllPoints(icon)
     icon.endtime = GetTime() + duration
     icon.name = spellName
+    icon.unitName = Name
     for k, v in ipairs(IcicleInterrupts) do
         if v == spellID then
             --spellName
@@ -287,6 +344,16 @@ local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
         else
             icon.cooldown:SetText(" ")
             icon:SetScript("OnUpdate", nil)
+            if db[icon.unitName] then
+                for i = 1, #db[icon.unitName] do -- safe delete from db when timer runs out!
+                    if db[icon.unitName][i] and icon and db[icon.unitName][i].name == icon.name then
+                        --print("Icicle remove icon " .. icon.name .. " for unit " .. icon.unitName)
+                        icon:Hide()
+                        tremove(db[icon.unitName], i)
+                        count = count - 1
+                    end
+                end
+            end
         end
     end
 
@@ -335,38 +402,13 @@ local sourcetable = function(Name, spellID, spellName, eventType, subtracttime)
     end)
 end
 
---[[local getname = function(f)
-	local name
-	local _, _, _, _, _, _, eman = f:GetRegions()
-	if strmatch(eman:GetText(), "%d") then 
-		local _, _, _, _, _, eman = f:GetRegions()
-		name = strmatch(eman:GetText(), "[^%lU%p].+%P")
-	else
-		name = strmatch(eman:GetText(), "[^%lU%p].+%P")
-	end
-	return name
-end]]
-
-local getname = function(f)
-    local name
-    local _, _, _, _, eman, lvl, eman2 = f:GetRegions()
-    if f.aloftData then
-        name = f.aloftData.name
-    elseif strmatch(eman:GetText(), "%d") then
-        local _, _, _, _, _, eman = f:GetRegions()
-        name = eman:GetText()
-    else
-        name = eman:GetText()
-    end
-    return name
-end
-
 local onpurge = 0
 local uppurge = function(self, elapsed)
     onpurge = onpurge + elapsed
     if onpurge >= 1 then
         onpurge = 0
         if count == 0 then
+            --print("plateframe:SetScript(\"OnUpdate\", nil)")
             plateframe:SetScript("OnUpdate", nil)
             purgeframe:SetScript("OnUpdate", nil)
         end
@@ -394,7 +436,7 @@ local onplate = 0
 
 local getplate = function(frame, elapsed, spellID)
     onplate = onplate + elapsed
-    if onplate > .33 then
+    if onplate > .1 then -- 100ms update, was 330ms
         onplate = 0
         local num = WorldFrame:GetNumChildren()
         for i = 1, num do
@@ -405,22 +447,57 @@ local getplate = function(frame, elapsed, spellID)
             if f:GetNumRegions() > 2 and f:GetNumChildren() >= 1 then
                 if f:IsVisible() then
                     local name = getname(f)
+                    f.nameStr = name
+                    Icicle:Test(name)
                     if db[name] ~= nil then
-                        if f.icicle ~= db[name] then
+                        --if f.icicle ~= #db[name] then
+                            --print("Icicle getplate: f.icicle ~= #db[name]")
+                            --print(name)
                             f.icicle = #db[name]
-                            for i = 1, #db[name] do
-                                db[name][i]:SetParent(f)
-                                db[name][i]:Show()
+                            for j = 1, #db[name] do
+                                db[name][j]:SetParent(f)
+                                db[name][j]:Show()
                             end
                             addicons(name, f, spellID)
-                            f:SetScript("OnHide", function()
-                                hideicons(name, f)
-                            end)
-                        end
+                            if not f:GetScript("OnHide") then
+                                --("Icicle: f:SetScript(\"OnHide\")")
+                                f:SetScript("OnHide", hideicons)
+                                f.icicleHooked = true
+                            elseif not f.icicleHooked then
+                                --print("Icicle: f:HookScript(\"OnHide\")")
+                                f:HookScript("OnHide", hideicons)
+                                f.icicleHooked = true
+                            end
+                        --end
                     end
                 end
             end
         end
+    end
+end
+
+function Icicle:Test(name)
+    if testMode then
+        print("testmode executed")
+        local function testCD(unitName, spell, id)
+            if not eventcheck[unitName] then
+                eventcheck[unitName] = {}
+            end
+            if not eventcheck[unitName][spell] or GetTime() >= eventcheck[unitName][spell] + 1 then
+                count = count + 1
+                sourcetable(unitName, id, spell)
+                eventcheck[unitName][spell] = GetTime()
+            end
+            if not plateframe:GetScript("OnUpdate") then
+                plateframe:SetScript("OnUpdate", getplate)
+                purgeframe:SetScript("OnUpdate", uppurge)
+            end
+        end
+        testCD(name, "Shadowfury", 30283) -- 20s
+        testCD(name, "Intercept", 20252) -- 15s
+        testCD(name, "Intervene", 3411) -- 30s
+        testCD(name, "Pummel", 6552) -- 10s
+        testMode = nil
     end
 end
 
@@ -451,6 +528,7 @@ function IcicleEvent.COMBAT_LOG_EVENT_UNFILTERED(event, ...)
                 eventcheck[Name][spellName] = GetTime()
             end
             if not plateframe:GetScript("OnUpdate") then
+                --print("plateframe:SetScript(\"OnUpdate\", getplate)")
                 plateframe:SetScript("OnUpdate", getplate)
                 purgeframe:SetScript("OnUpdate", uppurge)
             end
