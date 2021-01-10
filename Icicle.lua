@@ -254,7 +254,7 @@ local getname = function(namePlate)
     if namePlate.aloftData then
         name = namePlate.aloftData.name
     elseif sohighPlates then
-        name = namePlate.name:GetText()
+        name = namePlate.oldname:GetText()
     elseif strmatch(eman:GetText(), "%d") then
         local _, _, _, _, _, nameRegion = namePlate:GetRegions()
         name = nameRegion:GetText()
