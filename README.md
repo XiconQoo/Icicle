@@ -1,6 +1,6 @@
 # Icicle TBC Addon (forked from Schaka)
 
-### [v1.3-Beta Download Here](https://github.com/XiconQoo/Icicle/releases/download/v1.3-Beta/Icicle_XiconEdit_v1.3-Beta.zip)
+### [v1.3.1-Beta Download Here](https://github.com/XiconQoo/Icicle/releases/download/v1.3.1-Beta/Icicle_XiconEdit_v1.3.1-Beta.zip)
 
 This addon shows enemy CDs on their nameplates.
 
@@ -20,6 +20,9 @@ This is compatible with
 ![Screenshot](../readme-media/sample.png)
 
 ### Changes
+
+v1.3.1
+- add ElvUI support
 
 v1.3
 - SoHighPlates support to frame.oldname:GetText() (more reliant)

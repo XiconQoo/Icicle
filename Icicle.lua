@@ -48,7 +48,7 @@ SlashCmdList["ICICLE"] = ICICLEfunc;
 
 function Icicle:OnInitialize()
     self.db2 = LibStub("AceDB-3.0"):New("Icicledb", dbDefaults, "Default");
-    DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0AIcicle|r for WoW 2.4.3 updated by |cff0070DETrucidare|r - World of Corecraft  - /Icicle ");
+    DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0AIcicle|r v1.3-Beta XiCoN-Edit for WoW 2.4.3 updated by |cff0070DEXiconQoo|r - World of Corecraft  - /Icicle ");
     --LibStub("AceConfig-3.0"):RegisterOptionsTable("Icicle", Icicle.Options, {"Icicle", "SS"})
     self:RegisterChatCommand("Icicle", "ShowConfig")
     self.db2.RegisterCallback(self, "OnProfileChanged", "ChangeProfile")
@@ -253,6 +253,8 @@ local getname = function(namePlate)
     local _, _, _, _, eman, _, _ = namePlate:GetRegions()
     if namePlate.aloftData then
         name = namePlate.aloftData.name
+    elseif ElvUI then
+        name = namePlate.UnitFrame.oldName:GetText()
     elseif sohighPlates then
         name = namePlate.oldname:GetText()
     elseif strmatch(eman:GetText(), "%d") then
@@ -516,7 +518,7 @@ function IcicleEvent.COMBAT_LOG_EVENT_UNFILTERED(event, ...)
         return
     end
 
-    local isHostilePlayer = bit.band(srcFlags, COMBATLOG_OBJECT_TYPE_PLAYER) == COMBATLOG_OBJECT_TYPE_PLAYER and bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE
+    local isHostilePlayer = bit.band(srcFlags, COMBATLOG_OBJECT_TYPE_PLAYER) == COMBATLOG_OBJECT_TYPE_PLAYER and     bit.band(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE
 
     if IcicleCds[spellID] and isHostilePlayer then
         local Name = strmatch(srcName, "[%P]+")
