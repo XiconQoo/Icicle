@@ -3,6 +3,7 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfig = LibStub("AceConfig-3.0")
 local self, Icicle = Icicle, Icicle
 local Icicledb
+local testMode
 
 Icicle_Font = {
     ["Interface\\AddOns\\Icicle\\FreeUniversal-Regular.ttf"] = "FreeUniversal-Regular",
@@ -17,31 +18,6 @@ Icicle_Order = {
 
 ---------------------------------------------------------------------------------------------
 
--- SLASH COMMAND
-
----------------------------------------------------------------------------------------------
-
-SLASH_ICICLE1 = "/icicletest"
-
-local testMode
-local function ICICLEfunc(msg)
-    if msg ~= nil and msg ~= "" then
-        if testMode then
-            testMode = nil
-        else
-            testMode = true
-            Icicle:Test(msg)
-            print("Icicle testmode activated on unit " .. msg)
-        end
-    else
-        print("Icicle type \"/icicletest UnitName\" for test mode")
-    end
-end
-
-SlashCmdList["ICICLE"] = ICICLEfunc;
-
----------------------------------------------------------------------------------------------
-
 -- ICICLE
 
 ---------------------------------------------------------------------------------------------
@@ -51,6 +27,8 @@ function Icicle:OnInitialize()
     DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0AIcicle|r v1.3-Beta XiCoN-Edit for WoW 2.4.3 updated by |cff0070DEXiconQoo|r - World of Corecraft  - /Icicle ");
     --LibStub("AceConfig-3.0"):RegisterOptionsTable("Icicle", Icicle.Options, {"Icicle", "SS"})
     self:RegisterChatCommand("Icicle", "ShowConfig")
+    self:RegisterChatCommand("Icicletest", "InitTest")
+    self:RegisterChatCommand("Iciclereset", "Reset")
     self.db2.RegisterCallback(self, "OnProfileChanged", "ChangeProfile")
     self.db2.RegisterCallback(self, "OnProfileCopied", "ChangeProfile")
     self.db2.RegisterCallback(self, "OnProfileReset", "ChangeProfile")
@@ -481,7 +459,17 @@ local getplate = function(frame, elapsed, spellID)
                 end
             end
         end
+        testMode = nil
     end
+end
+
+function Icicle:InitTest()
+    print("Icicle - testmode initiated on all visible plates")
+    if not plateframe:GetScript("OnUpdate") then
+        plateframe:SetScript("OnUpdate", getplate)
+        purgeframe:SetScript("OnUpdate", uppurge)
+    end
+    testMode = true
 end
 
 function Icicle:Test(name)
@@ -504,7 +492,6 @@ function Icicle:Test(name)
         testCD(name, "Intercept", 20252) -- 15s
         testCD(name, "Intervene", 3411) -- 30s
         testCD(name, "Pummel", 6552) -- 10s
-        testMode = nil
     end
 end
 
@@ -545,10 +532,20 @@ function IcicleEvent.PLAYER_ENTERING_WORLD(event, ...)
     count = 0
 end
 
+function Icicle:Reset()
+    print("Icicle - reset all timers")
+    for k, v in pairs(db) do
+        for i = 1, #v do
+            if v[i] then
+                v[i].endtime = 0.05
+            end
+        end
+    end
+end
+
 local Icicle = CreateFrame("frame")
 Icicle:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 Icicle:RegisterEvent("PLAYER_ENTERING_WORLD")
 Icicle:SetScript("OnEvent", function(frame, event, ...)
     IcicleEvent[event](IcicleEvent, ...)
 end)
-	
