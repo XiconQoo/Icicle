@@ -1,13 +1,15 @@
 # Icicle TBC Addon (forked from Schaka)
 
-### [v1.3.1-Beta Download Here](https://github.com/XiconQoo/Icicle/releases/download/v1.3.1-Beta/Icicle_XiconEdit_v1.3.1-Beta.zip)
+### [v1.3.2-Beta Download Here](https://github.com/XiconQoo/Icicle/releases/download/v1.3.2-Beta/Icicle_XiconEdit_v1.3.2-Beta.zip)
 
 This addon shows enemy CDs on their nameplates.
 
 This is a slightly improved version of (https://github.com/Schaka/Icicle).
 The goal is to make it more reliant on clearing it's own icons.
 
-You can create testicons with `/icicletest unitname` where `unitname` is the name of an hostile nameplate.
+You can create testicons with `/icicletest` on all visible plates.
+
+You can reset all active cooldown with `/iciclereset`.
 
 This is compatible with 
 - https://github.com/XiconQoo/XiconPlateBuffs
@@ -20,6 +22,10 @@ This is compatible with
 ![Screenshot](../readme-media/sample.png)
 
 ### Changes
+
+v1.3.2
+- change `/icicletest unitname` to `/icicletest` - now shows cooldowns on all visible nameplates
+- add `/iciclereset` to reset all active cooldown (helpful for duels for instance)
 
 v1.3.1
 - add ElvUI support
