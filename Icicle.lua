@@ -1,16 +1,31 @@
-Icicle = LibStub("AceAddon-3.0"):NewAddon("Icicle", "AceConsole-3.0")
+local ADDON_NAME = "Icicle"
+local VERSION = "v1.3.3-Beta"
+Icicle = LibStub("AceAddon-3.0"):NewAddon(ADDON_NAME, "AceConsole-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfig = LibStub("AceConfig-3.0")
 local self, Icicle = Icicle, Icicle
 local Icicledb
 local testMode
 
-Icicle_Font = {
+local print = function(s)
+    local str = s
+    if s == nil then str = "nil" end
+    if type(str) == "boolean" then
+        if str then
+            str = "true"
+        else
+            str = "false"
+        end
+    end
+    DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0A[".. ADDON_NAME .."]|r: " .. str)
+end
+
+local Icicle_Font = {
     ["Interface\\AddOns\\Icicle\\FreeUniversal-Regular.ttf"] = "FreeUniversal-Regular",
     ["Interface\\AddOns\\Icicle\\Hooge0655.ttf"] = "Hooge0655",
 }
 
-Icicle_Order = {
+local Icicle_Order = {
     ["none"] = "None",
     ["ascending"] = "Ascending",
     ["descending"] = "Descending",
@@ -24,7 +39,8 @@ Icicle_Order = {
 
 function Icicle:OnInitialize()
     self.db2 = LibStub("AceDB-3.0"):New("Icicledb", dbDefaults, "Default");
-    DEFAULT_CHAT_FRAME:AddMessage("|cffFF7D0AIcicle|r v1.3-Beta XiCoN-Edit for WoW 2.4.3 updated by |cff0070DEXiconQoo|r - World of Corecraft  - /Icicle ");
+    print(VERSION .." XiCoN-Edit for WoW 2.4.3 updated by |cff0070DEXiconQoo|r")
+    print("available commands:\n/Icicle (opens UI)\n/Icicletest (displays test icons on all shown nameplates)\n/Iciclereset (resets all cooldowns)")
     --LibStub("AceConfig-3.0"):RegisterOptionsTable("Icicle", Icicle.Options, {"Icicle", "SS"})
     self:RegisterChatCommand("Icicle", "ShowConfig")
     self:RegisterChatCommand("Icicletest", "InitTest")
@@ -48,6 +64,10 @@ function Icicle:OnInitialize()
         func = "ShowConfig",
         handler = Icicle,
     }
+    self.Aloft = IsAddOnLoaded("Aloft")
+    self.SoHighPlates = IsAddOnLoaded("SoHighPlates")
+    self.ElvUI = IsAddOnLoaded("ElvUI")
+    self.ShaguPlates = IsAddOnLoaded("ShaguPlates-tbc") or IsAddOnLoaded("ShaguPlates")
 
     LibStub("AceConfig-3.0"):RegisterOptionsTable("Icicle_bliz", bliz_options)
     AceConfigDialog:AddToBlizOptions("Icicle_bliz", "Icicle")
@@ -228,18 +248,28 @@ local IcicleInterrupts = { 47528, 34490, 2139, 15487--[[Silence]], 1766, 5799--[
 
 local getname = function(namePlate)
     local name
-    local _, _, _, _, eman, _, _ = namePlate:GetRegions()
-    if namePlate.aloftData then
-        name = namePlate.aloftData.name
-    elseif ElvUI then
-        name = namePlate.UnitFrame.oldName:GetText()
-    elseif sohighPlates then
-        name = namePlate.oldname:GetText()
-    elseif strmatch(eman:GetText(), "%d") then
-        local _, _, _, _, _, nameRegion = namePlate:GetRegions()
-        name = nameRegion:GetText()
+    if Icicle.Aloft then
+        if namePlate.aloftData then
+            name = namePlate.aloftData.name
+        end
+    elseif Icicle.SoHighPlates then
+        if namePlate.oldname or namePlate.name then
+            name = (namePlate.oldname and namePlate.oldname:GetText()) or (namePlate.name and namePlate.name:GetText())
+        end
     else
-        name = eman:GetText()
+        if Icicle.ElvUI then
+            if namePlate.UnitFrame then
+                name = namePlate.UnitFrame.oldName:GetText()
+            end
+        end
+        if not name then
+            local _, _, _, _, nameRegion1, nameRegion2 = namePlate:GetRegions()
+            if strmatch(nameRegion1:GetText(), "%d") then
+                name = nameRegion2:GetText()
+            else
+                name = nameRegion1:GetText()
+            end
+        end
     end
     return name
 end
@@ -278,7 +308,7 @@ end
 local hideicons = function(f)
     f.icicle = 0
     local name = getname(f)
-    if name == f.nameStr then
+    if name and name == f.nameStr then
         if db[name] then
             for i = 1, #db[name] do
                 db[name][i]:Hide()
@@ -439,21 +469,23 @@ local getplate = function(frame, elapsed, spellID)
             if f:GetNumRegions() > 2 and f:GetNumChildren() >= 1 then
                 if f:IsVisible() then
                     local name = getname(f)
-                    f.nameStr = name
-                    Icicle:Test(name)
-                    if db[name] ~= nil then
-                        f.icicle = #db[name]
-                        for j = 1, #db[name] do
-                            db[name][j]:SetParent(f)
-                            db[name][j]:Show()
-                        end
-                        addicons(name, f, spellID)
-                        if not f:GetScript("OnHide") then
-                            f:SetScript("OnHide", hideicons)
-                            f.icicleHooked = true
-                        elseif not f.icicleHooked then
-                            f:HookScript("OnHide", hideicons)
-                            f.icicleHooked = true
+                    if name then
+                        f.nameStr = name
+                        Icicle:Test(name)
+                        if db[name] ~= nil then
+                            f.icicle = #db[name]
+                            for j = 1, #db[name] do
+                                db[name][j]:SetParent(f)
+                                db[name][j]:Show()
+                            end
+                            addicons(name, f, spellID)
+                            if not f:GetScript("OnHide") then
+                                f:SetScript("OnHide", hideicons)
+                                f.icicleHooked = true
+                            elseif not f.icicleHooked then
+                                f:HookScript("OnHide", hideicons)
+                                f.icicleHooked = true
+                            end
                         end
                     end
                 end
