@@ -2,6 +2,10 @@
 
 ### [v1.3.3-Beta Download Here](https://github.com/XiconQoo/Icicle/releases/download/v1.3.3-Beta/Icicle_XiconEdit_v1.3.3-Beta.zip)
 
+###### <a target="_blank" rel="noopener noreferrer" href="https://www.paypal.me/xiconqoo/10"><img src="../readme-media/Paypal-Donate.png" height="30" style="margin-top:-30px;position:relative;top:20px;"></a> Please consider donating if you like my work
+
+### What is different
+
 This addon shows enemy CDs on their nameplates.
 
 This is a slightly improved version of (https://github.com/Schaka/Icicle).
